@@ -1,0 +1,149 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inflybo Data Processor</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .filter-buttons { margin: 20px 0; }
+        .filter-buttons button { margin-right: 10px; padding: 5px 10px; }
+        .active-filter { background-color: #4CAF50; color: white; }
+    </style>
+</head>
+<body>
+    <div style="position: fixed; top: 10px; right: 10px; font-size: 20px;" id="clock"></div>
+
+    <h1>Paste Inflybo Data</h1>
+    <textarea id="inflyboData" rows="10" cols="50"></textarea>
+    <br>
+    <button onclick="processData()">Process Data</button>
+    <button onclick="clearData()">Clear Data</button>
+    
+    <div class="filter-buttons">
+        <button onclick="filterTable('all')" class="active-filter">All</button>
+        <button onclick="filterTable('Priority Pass')">Priority Pass</button>
+        <button onclick="filterTable('Lounge Key')">Lounge Key</button>
+        <button onclick="filterTable('Elite+')">Elite+</button>
+        <button onclick="filterTable('Business SkyTeam')">Business SkyTeam</button>
+        <button onclick="filterTable('PP+LK')">Priority Pass + Lounge Key</button>
+    </div>
+
+    <div id="results">
+        <table id="dataTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Access</th>
+                    <th>Flight</th>
+                    <th>Guests</th>
+                    <th>Entry Date</th>
+                    <th>Entry Time</th>
+                    <th>Exit Time</th>
+                    <th>Flight Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString();
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function filterTable(category) {
+            const tbody = document.querySelector('#dataTable tbody');
+            const rows = tbody.getElementsByTagName('tr');
+            const buttons = document.querySelectorAll('.filter-buttons button');
+            
+            buttons.forEach(btn => btn.classList.remove('active-filter'));
+            event.target.classList.add('active-filter');
+            
+            for (let row of rows) {
+                const accessCell = row.cells[1].textContent;
+                if (category === 'all') {
+                    row.style.display = '';
+                } else if (category === 'PP+LK') {
+                    row.style.display = (accessCell === 'Priority Pass' || accessCell === 'Lounge Key') ? '' : 'none';
+                } else {
+                    row.style.display = accessCell === category ? '' : 'none';
+                }
+            }
+        }
+
+        function clearData() {
+            document.getElementById('inflyboData').value = '';
+            document.getElementById('dataTable').style.display = 'none';
+        }
+
+        function processData() {
+            const data = document.getElementById('inflyboData').value;
+            
+            function formatFlightCode(code) {
+                const airline = code.slice(0, 2);
+                const number = parseInt(code.slice(2)).toString();
+                return `${airline} ${number}`;
+            }
+
+            fetch('/api/process-inflybo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ data: data })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const table = document.getElementById('dataTable');
+                const tbody = table.getElementsByTagName('tbody')[0];
+                tbody.innerHTML = '';
+                
+                data.sort((a, b) => {
+                    const dateA = new Date(a.entry.day + ' ' + a.entry.time);
+                    const dateB = new Date(b.entry.day + ' ' + b.entry.time);
+                    return dateA - dateB;
+                });
+                
+                data.forEach((row, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.name}</td>
+                        <td>${row.access}</td>
+                        <td>${row.airline_flight}</td>
+                        <td>${row.guests}</td>
+                        <td>${row.entry.day}</td>
+                        <td>${row.entry.time}</td>
+                        <td>${row.entry.exit_time}</td>
+                        <td id="flight-${row.airline_flight}-${index}">Loading...</td>
+                        <td id="status-${row.airline_flight}-${index}">Loading...</td>
+                    `;
+                    tbody.appendChild(tr);
+
+                    fetch(`/api/flight-time/${formatFlightCode(row.airline_flight)}`)
+                        .then(response => response.json())
+                        .then(flightData => {
+                            document.getElementById(`flight-${row.airline_flight}-${index}`).textContent = 
+                                flightData.time || 'Not found';
+                            document.getElementById(`status-${row.airline_flight}-${index}`).textContent = 
+                                flightData.status || '';
+                        })
+                        .catch(error => {
+                            document.getElementById(`flight-${row.airline_flight}-${index}`).textContent = 'Error';
+                            document.getElementById(`status-${row.airline_flight}-${index}`).textContent = '';
+                        });
+                });
+                
+                table.style.display = 'table';
+            });
+        }
+    </script>
+</body>
+</html>
