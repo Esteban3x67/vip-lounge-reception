@@ -65,6 +65,48 @@ Main tracking fields:
 - Flight departure time
 - Status updates
 
+
+/////////////UPDATE - 11 FEB 2025 /////////////////
+
+# VIP Lounge Reception Tool
+
+## New Features: Dashboard View and Shower Management System
+
+
+### Shower TAB
+- Added Shower tab to enter PAX.
+- Ability to give priority if PAX is fliying with SKYTEAM.
+
+### Dashboard Integration
+- Stay Limit table with the 10 next to leave PAX
+- Real-time shower status monitoring
+- Integrated with main dashboard
+- Quick status updates and PAX assignment
+
+### Features
+- Queue management with priority system
+- Automatic timer warnings (20+ minutes)
+- Cleaning status tracking
+- Smart shower assignment
+- Name truncation for long names
+
+### Usage
+1. Add PAX to shower queue (normal or priority)
+2. Assign available showers
+3. Monitor usage time
+4. Mark as finished when PAX leaves
+5. Track cleaning status
+6. Assign next PAX when ready
+
+### Installation
+[Your existing installation instructions]
+
+### Contributing
+[Your existing contribution guidelines]
+
+### Version
+1.1.2 [Dashboard (Inflybo, Shower), Inflybo TAB, Shower TAB]
+
 ## Project Status
 🚧 Under Development
 
