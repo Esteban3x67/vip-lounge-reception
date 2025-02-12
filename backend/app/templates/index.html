@@ -1,56 +1,408 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <title>Inflybo Data Processor</title>
     <style>
+        /* Base table styles */
         table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
         th { background-color: #f2f2f2; }
         tr:nth-child(even) { background-color: #f9f9f9; }
+
+        /* Button and filter styles */
         .filter-buttons { margin: 20px 0; }
         .filter-buttons button { margin-right: 10px; padding: 5px 10px; }
         .active-filter { background-color: #4CAF50; color: white; }
+        .tab-buttons button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            cursor: pointer;
+            border: none;
+            background: #f0f0f0;
+        }
+        .tab-buttons .tab-active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        /* Refresh button styles */
+        .refresh-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .refresh-button:hover {
+            background-color: #45a049;
+        }
+        .refresh-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Input and search styles */
+        #searchBox {
+            padding: 5px;
+            width: 200px;
+            margin-left: 10px;
+        }
+        .top-right-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            text-align: right;
+        }
+
+        /* Stay Limit Monitor specific styles */
+        .stay-limit-monitor {
+            max-width: 1200px;
+            margin: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .stay-limit-monitor h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        /* Time filter styles */
+        .time-filter {
+            padding: 5px 15px;
+            margin-right: 10px;
+            border: 1px solid #4CAF50;
+            background: white;
+            color: #4CAF50;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .active-time-filter {
+            background: #4CAF50;
+            color: white;
+        }
+
+        /* Shower management styles */
+        .shower-input {
+            margin: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .shower-input input {
+            padding: 12px;
+            margin-right: 10px;
+            width: 200px;
+        }
+        .shower-queue {
+            margin: 20px;
+        }
+        .status-waiting { background-color: #fff9c4; }
+        .status-in-shower { background-color: #c8e6c9; }
+        .status-cleaning { background-color: #ffcdd2; }
+        .status-ready { background-color: #bbdefb; }
+
+        .shower-status {
+            max-width: 1200px;
+            margin: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .warning-time {
+            background-color: #fff9c4;
+            color: #ff6f00;
+            font-weight: bold;
+        }
+
+        /* dinamic shower tables */
+        .shower-status-container {
+            position: absolute;
+            top: 100px;
+            right: 350px;
+            width: 600px;
+        }
+
+        .shower-status {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Make the table cells a bit bigger */
+        .shower-status table td, 
+        .shower-status table th {
+            padding: 12px; /* Increased from 8px */
+            font-size: 14px; /* Slightly larger font */
+        }
+
+        /* Make sure the table takes up the full width */
+        .shower-status table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        /* Adjust column widths */
+        .shower-status table th:nth-child(1) { width: 15%; } /* Shower */
+        .shower-status table th:nth-child(2) { width: 15%; } /* Status */
+        .shower-status table th:nth-child(3) { width: 30%; } /* PAX Name */
+        .shower-status table th:nth-child(4) { width: 20%; } /* Time */
+        .shower-status table th:nth-child(5) { width: 20%; } /* Actions */
+
+        .shower-status h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .next-pax-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        .pax-name {
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        .shower-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .assign-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        .assign-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+.assign-button[disabled]:hover::after {
+    content: "Shower already in use";
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.status-cleaning {
+    background-color: #ffcdd2;
+}
+
     </style>
 </head>
 <body>
-    <div style="position: fixed; top: 10px; right: 10px; font-size: 20px;" id="clock"></div>
-
-    <h1>Paste Inflybo Data</h1>
-    <textarea id="inflyboData" rows="10" cols="50"></textarea>
-    <br>
-    <button onclick="processData()">Process Data</button>
-    <button onclick="clearData()">Clear Data</button>
-    
-    <div class="filter-buttons">
-        <button onclick="filterTable('all')" class="active-filter">All</button>
-        <button onclick="filterTable('Priority Pass')">Priority Pass</button>
-        <button onclick="filterTable('Lounge Key')">Lounge Key</button>
-        <button onclick="filterTable('Elite+')">Elite+</button>
-        <button onclick="filterTable('Business SkyTeam')">Business SkyTeam</button>
-        <button onclick="filterTable('PP+LK')">Priority Pass + Lounge Key</button>
+    <!-- Clock and Flight Refresh Button -->
+    <div class="top-right-container">
+        <div id="clock" style="font-size: 20px;"></div>
+        <button id="refreshFlights" onclick="handleRefreshFlights()" class="refresh-button">
+            Refresh All Flights
+        </button>
     </div>
 
-    <div id="results">
-        <table id="dataTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Access</th>
-                    <th>Flight</th>
-                    <th>Guests</th>
-                    <th>Entry Date</th>
-                    <th>Entry Time</th>
-                    <th>Exit Time</th>
-                    <th>Flight Time</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <!-- Tab Navigation -->
+    <div class="tab-buttons" style="margin-bottom: 20px;">
+        <button onclick="showTab('main')" class="tab-active">Main Dashboard</button>
+        <button onclick="showTab('inflybo')">Inflybo Data</button>
+        <button onclick="showTab('shower')">Shower</button>
+    </div>
+
+    <!-- Main Dashboard Tab -->
+    <div id="mainTab" class="tab-content">
+        <h2>Main Dashboard</h2>
+        
+        <!-- Stay Limit Monitor with Refresh Button -->
+        <div class="stay-limit-monitor">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3>Stay Limit Monitor</h3>
+                <button onclick="refreshAllTables()" class="refresh-button">Refresh Tables</button>
+            </div>
+            <div class="time-filter-buttons" style="margin-bottom: 15px;">
+                <button onclick="updateStayLimitMonitor(60)" class="time-filter active-time-filter">1 Hour</button>
+                <button onclick="updateStayLimitMonitor(120)" class="time-filter">2 Hours</button>
+                <button onclick="updateStayLimitMonitor(180)" class="time-filter">3 Hours</button>
+                <button onclick="updateStayLimitMonitor(240)" class="time-filter">4 Hours</button>
+            </div>
+            <table id="stayLimitTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Access</th>
+                        <th>Flight Code</th>
+                        <th>Exit Time</th>
+                        <th>Flight Time</th>
+                        <th>Flight Status</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Shower Status Container (moved outside stay-limit-monitor) -->
+        <div class="shower-status-container">
+            <div class="shower-status">
+                <h3>Shower Status</h3>
+                <div id="showerStatusRegular">
+                    <table id="showerStatusTable">
+                        <thead>
+                            <tr>
+                                <th>Shower</th>
+                                <th>Status</th>
+                                <th>PAX Name</th>
+                                <th>Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="normalShowerStatus">
+                                <td>Normal</td>
+                                <td>Empty</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                            <tr id="handicapShowerStatus">
+                                <td>Handicap</td>
+                                <td>Empty</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="nextPaxAssignment" style="display: none;">
+                    <div class="next-pax-header">
+                        <h4>Assign Next PAX</h4>
+                        <button onclick="returnToShowerStatus()" class="close-button">×</button>
+                    </div>
+                    <div class="next-pax-content">
+                        <p>Next PAX in Queue: <span id="nextPaxName" class="pax-name"></span></p>
+                        <div class="shower-options">
+                            <button id="assignNormalBtn" onclick="assignToShower('normal')" class="assign-button">
+                                Assign to Normal Shower
+                            </button>
+                            <button id="assignHandicapBtn" onclick="assignToShower('handicap')" class="assign-button">
+                                Assign to Handicap Shower
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Inflybo Data Tab -->
+    <div id="inflyboTab" class="tab-content" style="display: none;">
+        <h1>Paste Inflybo Data</h1>
+
+        <div style="margin-bottom: 10px;">
+            <label for="staffInitials">Staff Initials:</label>
+            <input type="text" id="staffInitials" maxlength="5" required style="margin-left: 10px;">
+        </div>
+
+        <textarea id="inflyboData" rows="10" cols="50"></textarea>
+        <br>
+        <button onclick="processData()">Process Data</button>
+        <button onclick="clearData()">Clear Data</button>
+        <button onclick="clearTable()">Clear Table</button>
+        
+        <div style="margin: 20px 0;">
+            <label for="searchBox">Search PAX:</label>
+            <input type="text" id="searchBox" onkeyup="searchPAX()" placeholder="Search by name...">
+        </div>
+
+        <div class="filter-buttons">
+            <button onclick="filterTable('all')" class="active-filter">All</button>
+            <button onclick="filterTable('Priority Pass')">Priority Pass</button>
+            <button onclick="filterTable('Lounge Key')">Lounge Key</button>
+            <button onclick="filterTable('Elite+')">Elite+</button>
+            <button onclick="filterTable('Business SkyTeam')">Business SkyTeam</button>
+            <button onclick="filterTable('PP+LK')">Priority Pass + Lounge Key</button>
+        </div>
+
+        <div id="results">
+            <table id="dataTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Staff</th>
+                        <th>Name</th>
+                        <th>Access</th>
+                        <th>Flight</th>
+                        <th>Guests</th>
+                        <th>Entry Date</th>
+                        <th>Entry Time</th>
+                        <th>Exit Time</th>
+                        <th>Flight Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Shower Management Tab -->
+    <div id="showerTab" class="tab-content" style="display: none;">
+        <h2>Shower Management</h2>
+        
+        <!-- Input form -->
+        <div class="shower-input">
+            <input type="text" id="showerPaxName" placeholder="Enter PAX name">
+            <button onclick="addToShowerQueue(false)">Add to Queue</button>
+            <button onclick="addToShowerQueue(true)">Add as Priority</button>
+        </div>
+
+        <!-- Queue display -->
+        <div class="shower-queue">
+            <h3>Current Queue</h3>
+            <table id="showerQueueTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Time in Status</th>
+                        <th>Priority</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
+        // Global variables
+        let lastRefreshTime = 0;
+        const REFRESH_COOLDOWN = 300000; // 5 minutes in milliseconds
+        let showerQueue = []; // Array to store shower queue data
+
+        // Clock functions
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').textContent = now.toLocaleTimeString();
@@ -59,6 +411,428 @@
         setInterval(updateClock, 1000);
         updateClock();
 
+        // Tab management
+        function showTab(tabName) {
+            const tabs = document.getElementsByClassName('tab-content');
+            for (let tab of tabs) {
+                tab.style.display = 'none';
+            }
+            document.getElementById(tabName + 'Tab').style.display = 'block';
+            
+            const buttons = document.getElementsByClassName('tab-buttons')[0].getElementsByTagName('button');
+            for (let button of buttons) {
+                button.classList.remove('tab-active');
+            }
+            event.target.classList.add('tab-active');
+
+            // Update tables when switching to main dashboard
+            if (tabName === 'main') {
+                updateStayLimitMonitor();
+                updateShowerDashboard(); // Add this line
+            }
+            updateShowerQueue(); // Update shower queue display when switching tabs
+        }
+
+
+        // Shower Management Functions
+        function addToShowerQueue(isPriority) {
+            const nameInput = document.getElementById('showerPaxName');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert('Please enter PAX name');
+                return;
+            }
+
+            const newPax = {
+                id: Date.now(), // Unique identifier
+                name: name,
+                status: 'Waiting',
+                startTime: new Date(),
+                isPriority: isPriority,
+                timeInStatus: 0
+            };
+
+            if (isPriority) {
+                // Add after last priority PAX or at start
+                const lastPriorityIndex = showerQueue.findLastIndex(pax => pax.isPriority);
+                if (lastPriorityIndex >= 0) {
+                    showerQueue.splice(lastPriorityIndex + 1, 0, newPax);
+                } else {
+                    showerQueue.unshift(newPax);
+                }
+            } else {
+                showerQueue.push(newPax);
+            }
+
+            nameInput.value = '';
+            updateShowerQueue();
+        }
+
+        function updateShowerStatus(id, newStatus) {
+            const pax = showerQueue.find(p => p.id === id);
+            if (pax) {
+                if (newStatus.includes('Shower')) {
+                    // Check if shower is available
+                    const showerType = newStatus.includes('Normal') ? 'Normal' : 'Handicap';
+                    const inUse = showerQueue.some(p => 
+                        p.id !== id && 
+                        p.status.includes(showerType)
+                    );
+                    if (inUse) {
+                        alert(`${showerType} shower is currently in use`);
+                        return;
+                    }
+                    // Start timer only when putting PAX in shower
+                    pax.startTime = new Date();
+                }
+                pax.status = newStatus;
+                pax.timeInStatus = 0;
+                updateShowerQueue();
+                updateShowerDashboard();
+            }
+        }
+
+        function updateShowerDashboard() {
+            const normalShower = showerQueue.find(p => p.status === 'In Normal Shower' || p.status === 'Normal Cleaning');
+            const handicapShower = showerQueue.find(p => p.status === 'In Handicap Shower' || p.status === 'Handicap Cleaning');
+            const now = new Date();
+
+            // Update Normal Shower
+            const normalRow = document.getElementById('normalShowerStatus');
+            if (normalShower) {
+                const timeInShower = Math.floor((now - normalShower.startTime) / 60000);
+                const isCleaning = normalShower.status === 'Normal Cleaning';
+                
+                normalRow.innerHTML = `
+                    <td>Normal</td>
+                    <td>${isCleaning ? 'Cleaning' : 'In Use'}</td>
+                    <td>${truncateName(normalShower.name)}</td>
+                    <td class="${timeInShower >= 20 && !isCleaning ? 'warning-time' : ''}">${timeInShower} min</td>
+                    <td>${isCleaning ? 
+                        '<button onclick="markShowerReady(\'normal\')">Ready</button>' : 
+                        '<button onclick="finishShower(\'normal\', ' + normalShower.id + ')">Finished</button>'}</td>
+                `;
+                normalRow.className = isCleaning ? 'status-cleaning' : '';
+            } else {
+                normalRow.innerHTML = `
+                    <td>Normal</td>
+                    <td>Empty</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                `;
+                normalRow.className = '';
+            }
+
+            // Update Handicap Shower (similar logic)
+            const handicapRow = document.getElementById('handicapShowerStatus');
+            if (handicapShower) {
+                const timeInShower = Math.floor((now - handicapShower.startTime) / 60000);
+                const isCleaning = handicapShower.status === 'Handicap Cleaning';
+                
+                handicapRow.innerHTML = `
+                    <td>Handicap</td>
+                    <td>${isCleaning ? 'Cleaning' : 'In Use'}</td>
+                     <td>${truncateName(handicapShower.name)}</td>
+                    <td class="${timeInShower >= 20 && !isCleaning ? 'warning-time' : ''}">${timeInShower} min</td>
+                    <td>${isCleaning ? 
+                        '<button onclick="markShowerReady(\'handicap\')">Ready</button>' : 
+                        '<button onclick="finishShower(\'handicap\', ' + handicapShower.id + ')">Finished</button>'}</td>
+                `;
+                handicapRow.className = isCleaning ? 'status-cleaning' : '';
+            } else {
+                handicapRow.innerHTML = `
+                    <td>Handicap</td>
+                    <td>Empty</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                `;
+                handicapRow.className = '';
+            }
+        }
+
+        function finishShower(showerType, paxId) {
+            const pax = showerQueue.find(p => p.id === paxId);
+            if (pax) {
+                pax.status = `${showerType.charAt(0).toUpperCase() + showerType.slice(1)} Cleaning`;
+                pax.startTime = new Date(); // Reset timer for cleaning status
+                updateShowerQueue();
+                updateShowerDashboard();
+            }
+        }
+
+        function markShowerReady(showerType) {
+            // Get next PAX in queue
+            const nextPax = showerQueue.find(p => p.status === 'Waiting');
+            
+            if (nextPax) {
+                // Show assignment options
+                document.getElementById('showerStatusRegular').style.display = 'none';
+                document.getElementById('nextPaxAssignment').style.display = 'block';
+                document.getElementById('nextPaxName').textContent = nextPax.name;
+                
+                // Only consider showers as occupied if they are actively in use
+                const normalInUse = showerQueue.some(p => p.status === 'In Normal Shower');
+                const handicapInUse = showerQueue.some(p => p.status === 'In Handicap Shower');
+                
+                document.getElementById('assignNormalBtn').disabled = normalInUse;
+                document.getElementById('assignHandicapBtn').disabled = handicapInUse;
+            } else {
+                // If no PAX in queue, just remove the cleaning PAX
+                const currentPax = showerQueue.find(p => 
+                    p.status === `${showerType.charAt(0).toUpperCase() + showerType.slice(1)} Cleaning`
+                );
+                if (currentPax) {
+                    showerQueue = showerQueue.filter(p => p.id !== currentPax.id);
+                }
+                updateShowerQueue();
+                updateShowerDashboard();
+            }
+        }
+
+
+        function assignToShower(showerType) {
+            const nextPax = showerQueue.find(p => p.status === 'Waiting');
+            if (nextPax) {
+                // Remove any PAX that was in cleaning status for this shower
+                const cleaningPax = showerQueue.find(p => 
+                    p.status === `${showerType.charAt(0).toUpperCase() + showerType.slice(1)} Cleaning`
+                );
+                if (cleaningPax) {
+                    showerQueue = showerQueue.filter(p => p.id !== cleaningPax.id);
+                }
+
+                // Assign the next PAX to the shower
+                nextPax.status = `In ${showerType.charAt(0).toUpperCase() + showerType.slice(1)} Shower`;
+                nextPax.startTime = new Date();
+            }
+            
+            // Return to normal view
+            document.getElementById('showerStatusRegular').style.display = 'block';
+            document.getElementById('nextPaxAssignment').style.display = 'none';
+            
+            updateShowerQueue();
+            updateShowerDashboard();
+        }
+
+        function returnToShowerStatus() {
+            document.getElementById('showerStatusRegular').style.display = 'block';
+            document.getElementById('nextPaxAssignment').style.display = 'none';
+        }
+
+        function removePaxFromQueue(id) {
+            showerQueue = showerQueue.filter(p => p.id !== id);
+            updateShowerQueue();
+        }
+
+        function updateShowerQueue() {
+            const table = document.getElementById('showerQueueTable').getElementsByTagName('tbody')[0];
+            const now = new Date();
+            
+            // Update display
+            table.innerHTML = '';
+            showerQueue.forEach(pax => {
+                const timeInStatus = Math.floor((now - pax.startTime) / 60000); // minutes
+                pax.timeInStatus = timeInStatus;
+
+                const tr = document.createElement('tr');
+                tr.className = `status-${pax.status.toLowerCase().replace(' ', '-')}`;
+                
+                let actionButtons = '';
+                switch(pax.status) {
+                    case 'Waiting':
+                        actionButtons = `
+                            <button onclick="updateShowerStatus(${pax.id}, 'In Normal Shower')">Use Normal</button>
+                            <button onclick="updateShowerStatus(${pax.id}, 'In Handicap Shower')">Use Handicap</button>
+                        `;
+                        break;
+                    case 'In Normal Shower':
+                    case 'In Handicap Shower':
+                        actionButtons = `
+                            <button onclick="updateShowerStatus(${pax.id}, 'Cleaning')">Finished</button>
+                        `;
+                        break;
+                    case 'Cleaning':
+                        actionButtons = `
+                            <button onclick="updateShowerStatus(${pax.id}, 'Ready')">Ready</button>
+                        `;
+                        break;
+                    case 'Ready':
+                        actionButtons = `
+                            <button onclick="removePaxFromQueue(${pax.id})">Remove</button>
+                        `;
+                        break;
+                }
+
+                tr.innerHTML = `
+                    <td>${truncateName(pax.name)}</td>
+                    <td>${pax.status}</td>
+                    <td>${timeInStatus} min ${timeInStatus >= 20 && pax.status.includes('Shower') ? '⚠️' : ''}</td>
+                    <td>${pax.isPriority ? 'Yes' : 'No'}</td>
+                    <td>${actionButtons}</td>
+                `;
+                table.appendChild(tr);
+            });
+        }
+
+        function truncateName(name, maxLength = 15) { // Adjust maxLength as needed
+            if (name.length <= maxLength) return name;
+            return name.substring(0, maxLength - 3) + '...';
+        }
+
+        // Set up periodic updates for shower queue times
+        setInterval(() => {
+            updateShowerQueue();
+            updateShowerDashboard();
+        }, 60000); // Update both shower queue and dashboard every minute
+
+        // Stay Limit Monitor functions
+    function updateStayLimitMonitor(timeLimit = 60) {
+            // Update filter button styles
+            const filterButtons = document.querySelectorAll('.time-filter');
+            filterButtons.forEach(btn => btn.classList.remove('active-time-filter'));
+            event?.target?.classList.add('active-time-filter');
+
+            const mainTable = document.querySelector('#dataTable tbody');
+            const monitorTable = document.querySelector('#stayLimitTable tbody');
+            
+            if (!mainTable || !monitorTable) return;
+            
+            // Show loading state
+            monitorTable.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 20px;">
+                        Loading...
+                    </td>
+                </tr>
+            `;
+            
+            // Small delay to show loading state
+            setTimeout(() => {
+                // Clear monitor table
+                monitorTable.innerHTML = '';
+                
+                // Get current time
+                const currentTime = new Date();
+                const currentHour = currentTime.getHours();
+                const currentMinute = currentTime.getMinutes();
+                
+                // Get all rows and process them
+                const rows = Array.from(mainTable.rows);
+                let paxToShow = [];
+                
+                rows.forEach(row => {
+                    const exitTimeStr = row.cells[7].textContent.trim();
+                    const [exitHour, exitMinute] = exitTimeStr.split(':').map(Number);
+                    
+                    // Calculate minutes until exit
+                    let minutesUntilExit = (exitHour - currentHour) * 60 + (exitMinute - currentMinute);
+                    if (minutesUntilExit < 0) {
+                        minutesUntilExit += 24 * 60;
+                    }
+                    
+                    // If within selected time limit, add to monitor
+                    if (minutesUntilExit <= timeLimit) {
+                        paxToShow.push({
+                            name: row.cells[1].textContent,
+                            access: row.cells[2].textContent,
+                            flightCode: row.cells[3].textContent,
+                            exitTime: exitTimeStr,
+                            flightTime: row.cells[8].textContent,
+                            flightStatus: row.cells[9].textContent,
+                            minutesUntilExit: minutesUntilExit
+                        });
+                    }
+                });
+                
+                // Sort by urgency (minutes until exit)
+                paxToShow.sort((a, b) => a.minutesUntilExit - b.minutesUntilExit);
+                // Limit to 10 entries no matter what time filter is selected
+                paxToShow = paxToShow.slice(0, 10);
+                
+                // If no PAX to show, display message
+                if (paxToShow.length === 0) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td colspan="6" style="text-align: center; padding: 20px;">
+                            No PAX to call at this time
+                        </td>
+                    `;
+                    monitorTable.appendChild(tr);
+                    return;
+                }
+                
+                // Add rows to monitor table
+                paxToShow.forEach(pax => {
+                    const tr = document.createElement('tr');
+                    
+                    // Add color based on urgency
+                    if (pax.minutesUntilExit <= 15) {
+                        tr.style.backgroundColor = '#ffcdd2'; // Red
+                    } else if (pax.minutesUntilExit <= 30) {
+                        tr.style.backgroundColor = '#fff9c4'; // Yellow
+                    }
+                    
+                    tr.innerHTML = `
+                        <td>${pax.name}</td>
+                        <td>${pax.access}</td>
+                        <td>${pax.flightCode}</td>
+                        <td>${pax.exitTime}</td>
+                        <td>${pax.flightTime}</td>
+                        <td>${pax.flightStatus || ''}</td>
+                    `;
+                    monitorTable.appendChild(tr);
+                });
+            }, 500); // 500ms delay to show loading state
+        }
+        // Flight status refresh function
+        function refreshAllFlightStatuses() {
+            const tbody = document.querySelector('#dataTable tbody');
+            const rows = tbody.getElementsByTagName('tr');
+            
+            // First set all to Loading...
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].cells[8].textContent = 'Loading...';
+                rows[i].cells[9].textContent = 'Loading...';
+            }
+            
+            // Then fetch new data
+            for (let i = 0; i < rows.length; i++) {
+                const flightCell = rows[i].cells[3];
+                const flightCode = flightCell.textContent;
+                
+                fetch(`/api/flight-time/${formatFlightCode(flightCode)}`)
+                    .then(response => response.json())
+                    .then(flightData => {
+                        rows[i].cells[8].textContent = flightData.time || 'Not found';
+                        rows[i].cells[9].textContent = flightData.status || '';
+                    })
+                    .catch(error => {
+                        rows[i].cells[8].textContent = 'Error';
+                        rows[i].cells[9].textContent = '';
+                    });
+            }
+            
+            // Update dashboard after flight refresh
+            setTimeout(updateStayLimitMonitor, 2000);
+        }
+
+        // [Rest of your existing functions: searchPAX, filterTable, clearData, clearTable, etc.]
+
+                // Search and filter functions
+                function searchPAX() {
+            const searchText = document.getElementById('searchBox').value.toLowerCase();
+            const tbody = document.querySelector('#dataTable tbody');
+            const rows = tbody.getElementsByTagName('tr');
+            
+            for (let row of rows) {
+                const nameCell = row.cells[1].textContent.toLowerCase();
+                row.style.display = nameCell.includes(searchText) ? '' : 'none';
+            }
+        }
+ 
         function filterTable(category) {
             const tbody = document.querySelector('#dataTable tbody');
             const rows = tbody.getElementsByTagName('tr');
@@ -68,7 +842,7 @@
             event.target.classList.add('active-filter');
             
             for (let row of rows) {
-                const accessCell = row.cells[1].textContent;
+                const accessCell = row.cells[2].textContent;
                 if (category === 'all') {
                     row.style.display = '';
                 } else if (category === 'PP+LK') {
@@ -78,72 +852,111 @@
                 }
             }
         }
-
+ 
+        // Data management functions
         function clearData() {
             document.getElementById('inflyboData').value = '';
+            document.getElementById('staffInitials').value = '';
+        }
+ 
+        function clearTable() {
+            const tbody = document.querySelector('#dataTable tbody');
+            tbody.innerHTML = '';
             document.getElementById('dataTable').style.display = 'none';
         }
-
-        function processData() {
-            const data = document.getElementById('inflyboData').value;
-            
-            function formatFlightCode(code) {
-                const airline = code.slice(0, 2);
-                const number = parseInt(code.slice(2)).toString();
-                return `${airline} ${number}`;
-            }
-
-            fetch('/api/process-inflybo', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ data: data })
-            })
-            .then(response => response.json())
-            .then(data => {
-                const table = document.getElementById('dataTable');
-                const tbody = table.getElementsByTagName('tbody')[0];
-                tbody.innerHTML = '';
-                
-                data.sort((a, b) => {
-                    const dateA = new Date(a.entry.day + ' ' + a.entry.time);
-                    const dateB = new Date(b.entry.day + ' ' + b.entry.time);
-                    return dateA - dateB;
-                });
-                
-                data.forEach((row, index) => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${row.name}</td>
-                        <td>${row.access}</td>
-                        <td>${row.airline_flight}</td>
-                        <td>${row.guests}</td>
-                        <td>${row.entry.day}</td>
-                        <td>${row.entry.time}</td>
-                        <td>${row.entry.exit_time}</td>
-                        <td id="flight-${row.airline_flight}-${index}">Loading...</td>
-                        <td id="status-${row.airline_flight}-${index}">Loading...</td>
-                    `;
-                    tbody.appendChild(tr);
-
-                    fetch(`/api/flight-time/${formatFlightCode(row.airline_flight)}`)
-                        .then(response => response.json())
-                        .then(flightData => {
-                            document.getElementById(`flight-${row.airline_flight}-${index}`).textContent = 
-                                flightData.time || 'Not found';
-                            document.getElementById(`status-${row.airline_flight}-${index}`).textContent = 
-                                flightData.status || '';
-                        })
-                        .catch(error => {
-                            document.getElementById(`flight-${row.airline_flight}-${index}`).textContent = 'Error';
-                            document.getElementById(`status-${row.airline_flight}-${index}`).textContent = '';
-                        });
-                });
-                
-                table.style.display = 'table';
-            });
+ 
+        function formatFlightCode(code) {
+            const airline = code.slice(0, 2);
+            const number = parseInt(code.slice(2)).toString();
+            return `${airline} ${number}`;
         }
+ 
+        function processData() {
+   const initials = document.getElementById('staffInitials').value.trim();
+   if (!initials) {
+       alert('Please enter receptionist initials');
+       return;
+   }
+
+   const data = document.getElementById('inflyboData').value;
+
+   fetch('/api/process-inflybo', {
+       method: 'POST',
+       headers: {
+           'Content-Type': 'application/json'
+       },
+       body: JSON.stringify({ data: data })
+   })
+   .then(response => response.json())
+   .then(data => {
+       const table = document.getElementById('dataTable');
+       const tbody = table.getElementsByTagName('tbody')[0];
+       
+       // Check existing entries to avoid duplicates
+       const existingEntries = new Set(Array.from(tbody.rows).map(row => {
+           return `${row.cells[1].textContent}-${row.cells[6].textContent}`; // name + entry time as unique identifier
+       }));
+       
+       // Filter out duplicates from new data
+       const newData = data.filter(row => {
+           const entryId = `${row.name}-${row.entry.time}`;
+           return !existingEntries.has(entryId);
+       });
+
+       // Sort new entries by date/time
+       newData.sort((a, b) => {
+           const dateA = new Date(a.entry.day + ' ' + a.entry.time);
+           const dateB = new Date(b.entry.day + ' ' + b.entry.time);
+           return dateA - dateB;
+       });
+       
+       // Add only new entries
+       newData.forEach((row, index) => {
+           const tr = document.createElement('tr');
+           tr.innerHTML = `
+               <td>${initials}</td>
+               <td>${row.name}</td>
+               <td>${row.access}</td>
+               <td>${row.airline_flight}</td>
+               <td>${row.guests}</td>
+               <td>${row.entry.day}</td>
+               <td>${row.entry.time}</td>
+               <td>${row.entry.exit_time}</td>
+               <td id="flight-${row.airline_flight}-${index}">Loading...</td>
+               <td id="status-${row.airline_flight}-${index}">Loading...</td>
+           `;
+           tbody.appendChild(tr);
+
+           fetch(`/api/flight-time/${formatFlightCode(row.airline_flight)}`)
+               .then(response => response.json())
+               .then(flightData => {
+                   document.getElementById(`flight-${row.airline_flight}-${index}`).textContent = 
+                       flightData.time || 'Not found';
+                   document.getElementById(`status-${row.airline_flight}-${index}`).textContent = 
+                       flightData.status || '';
+               })
+               .catch(error => {
+                   document.getElementById(`flight-${row.airline_flight}-${index}`).textContent = 'Error';
+                   document.getElementById(`status-${row.airline_flight}-${index}`).textContent = '';
+               });
+       });
+       
+       table.style.display = 'table';
+       refreshAllFlightStatuses();
+       updateStayLimitMonitor();
+   });
+} 
+        // Set up regular updates for stay limit monitor
+        setInterval(updateStayLimitMonitor, 60000);  // Update every minute
+ 
+        // Add new functions here
     </script>
-</body>
-</html>
+ </body>
+ </html>
+
+
+
+
+
+
+ 
